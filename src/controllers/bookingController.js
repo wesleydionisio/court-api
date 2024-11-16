@@ -42,3 +42,26 @@ exports.createBooking = async (req, res) => {
     res.status(500).json({ message: 'Erro ao criar reserva.', error: err.message });
   }
 };
+
+exports.cancelBooking = async (req, res) => {
+  try {
+    const { id } = req.params; // ID da reserva a ser cancelada
+
+    // Verificar se a reserva existe e pertence ao usuário
+    const booking = await Booking.findOne({ _id: id, usuario_id: req.user.id });
+    if (!booking) {
+      return res.status(404).json({ message: 'Reserva não encontrada ou não pertence ao usuário.' });
+    }
+
+    // Atualizar o status da reserva para 'cancelada'
+    booking.status = 'cancelada';
+    await booking.save();
+
+    res.status(200).json({
+      message: 'Reserva cancelada com sucesso.',
+      reserva: booking,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Erro ao cancelar reserva.', error: err.message });
+  }
+};

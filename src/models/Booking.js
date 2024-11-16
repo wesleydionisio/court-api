@@ -6,6 +6,11 @@ const BookingSchema = new mongoose.Schema({
   data: { type: Date, required: true },
   horario_inicio: { type: String, required: true }, // Formato HH:mm
   horario_fim: { type: String, required: true },   // Formato HH:mm
+  status: {
+    type: String,
+    enum: ['pendente', 'confirmada', 'cancelada'], // Valores permitidos
+    default: 'pendente', // Valor padrão ao criar
+  },
 });
 
 module.exports = mongoose.model('Booking', BookingSchema);
