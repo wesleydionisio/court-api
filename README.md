@@ -1,87 +1,90 @@
-Aqui está o formato da documentação da API em estilo README para ser usado no GitHub:
-
-API de Agendamentos de Quadras Esportivas
+# API de Agendamentos de Quadras Esportivas
 
 Esta API permite gerenciar quadras esportivas, consultar horários, criar e cancelar reservas.
 
-Índice
+## Índice
 
-	•	Descrição
-	•	Base URL
-	•	Recursos
-	•	Autenticação
-	•	Quadras
-	•	Agendamentos
-	•	Validações
-	•	Erros Comuns
-	•	Considerações Finais
+* [Descrição](#descrição)
+* [Base URL](#base-url)
+* [Recursos](#recursos)
+  * [Autenticação](#autenticação)
+  * [Quadras](#quadras)
+  * [Agendamentos](#agendamentos)
+* [Validações](#validações)
+* [Erros Comuns](#erros-comuns)
+* [Considerações Finais](#considerações-finais)
 
-Descrição
+## Descrição
 
 A API de Agendamentos de Quadras Esportivas permite que usuários visualizem quadras disponíveis, reservem horários, verifiquem agendamentos existentes e cancelem reservas.
 
-Base URL
+## Base URL
 
-	•	Localhost: http://localhost:3000
+* Localhost: `http://localhost:3000`
 
-Recursos
+## Recursos
 
-Autenticação
+### Autenticação
 
-1. Registro de Usuário
+#### 1. Registro de Usuário
 
-	•	URL: /api/auth/register
-	•	Método: POST
-	•	Descrição: Registra um novo usuário no sistema.
-	•	Body:
+* **URL**: `/api/auth/register`
+* **Método**: POST
+* **Descrição**: Registra um novo usuário no sistema.
+* **Body**:
 
+```json
 {
   "nome": "João Silva",
   "email": "joao@email.com",
   "telefone": "123456789",
   "senha": "senha123"
 }
+```
 
+* **Resposta**:
 
-	•	Resposta:
-
+```json
 {
   "id": "64f4ef3b1c232c0012b09324",
   "nome": "João Silva",
   "email": "joao@email.com",
   "telefone": "123456789"
 }
+```
 
+#### 2. Login de Usuário
 
+* **URL**: `/api/auth/login`
+* **Método**: POST
+* **Descrição**: Faz login e retorna um token JWT.
+* **Body**:
 
-2. Login de Usuário
-
-	•	URL: /api/auth/login
-	•	Método: POST
-	•	Descrição: Faz login e retorna um token JWT.
-	•	Body:
-
+```json
 {
   "email": "joao@email.com",
   "senha": "senha123"
 }
+```
 
+* **Resposta**:
 
-	•	Resposta:
-
+```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5..."
 }
+```
 
-Quadras
+### Quadras
 
-1. Listar Quadras
+#### 1. Listar Quadras
 
-	•	URL: /api/courts
-	•	Método: GET
-	•	Descrição: Retorna todas as quadras cadastradas.
-	•	Resposta:
+* **URL**: `/api/courts`
+* **Método**: GET
+* **Descrição**: Retorna todas as quadras cadastradas.
+* **Resposta**:
 
+```json
 [
   {
     "_id": "64f4ef3b1c232c0012b09325",
@@ -98,20 +101,20 @@ Quadras
     ]
   }
 ]
+```
 
+#### 2. Consultar Horários Agendados
 
+* **URL**: `/api/bookings/:quadraId/reserved-times`
+* **Método**: GET
+* **Descrição**: Retorna os horários reservados para uma quadra em uma data específica.
+* **Parâmetros de URL**:
+  * `quadraId`: ID da quadra.
+* **Query Parameters**:
+  * `data`: Data no formato YYYY-MM-DD (opcional, padrão: hoje).
+* **Resposta**:
 
-2. Consultar Horários Agendados
-
-	•	URL: /api/bookings/:quadraId/reserved-times
-	•	Método: GET
-	•	Descrição: Retorna os horários reservados para uma quadra em uma data específica.
-	•	Parâmetros de URL:
-	•	quadraId: ID da quadra.
-	•	Query Parameters:
-	•	data: Data no formato YYYY-MM-DD (opcional, padrão: hoje).
-	•	Resposta:
-
+```json
 {
   "quadra_id": "64f4ef3b1c232c0012b09325",
   "data": "2024-11-17",
@@ -123,28 +126,31 @@ Quadras
     }
   ]
 }
+```
 
-Agendamentos
+### Agendamentos
 
-1. Criar Reserva
+#### 1. Criar Reserva
 
-	•	URL: /api/bookings
-	•	Método: POST
-	•	Descrição: Cria uma nova reserva de quadra.
-	•	Headers:
-	•	Authorization: Bearer <TOKEN_JWT>
-	•	Body:
+* **URL**: `/api/bookings`
+* **Método**: POST
+* **Descrição**: Cria uma nova reserva de quadra.
+* **Headers**:
+  * `Authorization`: Bearer <TOKEN_JWT>
+* **Body**:
 
+```json
 {
   "quadra_id": "64f4ef3b1c232c0012b09325",
   "data": "2024-11-17",
   "horario_inicio": "14:00",
   "horario_fim": "15:00"
 }
+```
 
+* **Resposta**:
 
-	•	Resposta:
-
+```json
 {
   "message": "Reserva criada com sucesso.",
   "reserva": {
@@ -157,20 +163,20 @@ Agendamentos
     "status": "pendente"
   }
 }
+```
 
+#### 2. Cancelar Reserva
 
+* **URL**: `/api/bookings/:id/cancel`
+* **Método**: PUT
+* **Descrição**: Altera o status da reserva para "cancelada".
+* **Headers**:
+  * `Authorization`: Bearer <TOKEN_JWT>
+* **Parâmetros de URL**:
+  * `id`: ID da reserva.
+* **Resposta**:
 
-2. Cancelar Reserva
-
-	•	URL: /api/bookings/:id/cancel
-	•	Método: PUT
-	•	Descrição: Altera o status da reserva para “cancelada”.
-	•	Headers:
-	•	Authorization: Bearer <TOKEN_JWT>
-	•	Parâmetros de URL:
-	•	id: ID da reserva.
-	•	Resposta:
-
+```json
 {
   "message": "Reserva cancelada com sucesso.",
   "reserva": {
@@ -183,60 +189,62 @@ Agendamentos
     "status": "cancelada"
   }
 }
+```
 
-Validações
+## Validações
 
-	1.	Cadastro de Usuário:
-	•	Campos obrigatórios: nome, email, telefone, senha.
-	2.	Reserva:
-	•	Não é possível reservar horários que já estão ocupados.
-	•	Não é possível reservar fora do horário de funcionamento da quadra.
-	3.	Cancelamento de Reserva:
-	•	Apenas o usuário que criou a reserva pode cancelá-la.
+1. **Cadastro de Usuário**:
+   * Campos obrigatórios: nome, email, telefone, senha.
+2. **Reserva**:
+   * Não é possível reservar horários que já estão ocupados.
+   * Não é possível reservar fora do horário de funcionamento da quadra.
+3. **Cancelamento de Reserva**:
+   * Apenas o usuário que criou a reserva pode cancelá-la.
 
-Erros Comuns
+## Erros Comuns
 
-Cadastro de Usuário
+### Cadastro de Usuário
 
-	•	Email já registrado:
+* Email já registrado:
 
+```json
 {
   "message": "Erro ao registrar usuário.",
   "error": "Email já cadastrado."
 }
+```
 
+### Reserva
 
+* Quadra não encontrada:
 
-Reserva
-
-	•	Quadra não encontrada:
-
+```json
 {
   "message": "Quadra não encontrada."
 }
+```
 
+* Horário indisponível:
 
-	•	Horário indisponível:
-
+```json
 {
   "message": "Horário indisponível para reserva."
 }
+```
 
+### Cancelamento de Reserva
 
+* Reserva não encontrada ou não pertence ao usuário:
 
-Cancelamento de Reserva
-
-	•	Reserva não encontrada ou não pertence ao usuário:
-
+```json
 {
   "message": "Reserva não encontrada ou não pertence ao usuário."
 }
+```
 
-Considerações Finais
+## Considerações Finais
 
-	•	Autenticação: Apenas usuários autenticados podem criar ou cancelar reservas.
-	•	Flexibilidade: O front-end pode decidir quais horários exibir como disponíveis, com base nos dados retornados.
+* **Autenticação**: Apenas usuários autenticados podem criar ou cancelar reservas.
+* **Flexibilidade**: O front-end pode decidir quais horários exibir como disponíveis, com base nos dados retornados.
 
-Se precisar de mais informações ou ajustes, é só abrir uma issue ou entrar em contato! 😊
-
-Agora, basta copiar esse conteúdo para o arquivo README.md do seu repositório no GitHub!
+---
