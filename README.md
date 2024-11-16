@@ -1,4 +1,20 @@
-Documentação Completa da API de Agendamentos de Quadras
+Aqui está o formato da documentação da API em estilo README para ser usado no GitHub:
+
+API de Agendamentos de Quadras Esportivas
+
+Esta API permite gerenciar quadras esportivas, consultar horários, criar e cancelar reservas.
+
+Índice
+
+	•	Descrição
+	•	Base URL
+	•	Recursos
+	•	Autenticação
+	•	Quadras
+	•	Agendamentos
+	•	Validações
+	•	Erros Comuns
+	•	Considerações Finais
 
 Descrição
 
@@ -10,14 +26,14 @@ Base URL
 
 Recursos
 
-1. Autenticação
+Autenticação
 
-1.1 Registro de Usuário
+1. Registro de Usuário
 
 	•	URL: /api/auth/register
 	•	Método: POST
 	•	Descrição: Registra um novo usuário no sistema.
-	•	Corpo da Requisição:
+	•	Body:
 
 {
   "nome": "João Silva",
@@ -38,12 +54,12 @@ Recursos
 
 
 
-1.2 Login de Usuário
+2. Login de Usuário
 
 	•	URL: /api/auth/login
 	•	Método: POST
 	•	Descrição: Faz login e retorna um token JWT.
-	•	Corpo da Requisição:
+	•	Body:
 
 {
   "email": "joao@email.com",
@@ -57,9 +73,9 @@ Recursos
   "token": "eyJhbGciOiJIUzI1NiIsInR5..."
 }
 
-2. Quadras
+Quadras
 
-2.1 Listar Quadras
+1. Listar Quadras
 
 	•	URL: /api/courts
 	•	Método: GET
@@ -85,7 +101,7 @@ Recursos
 
 
 
-2.2 Consultar Horários Agendados
+2. Consultar Horários Agendados
 
 	•	URL: /api/bookings/:quadraId/reserved-times
 	•	Método: GET
@@ -108,16 +124,16 @@ Recursos
   ]
 }
 
-3. Agendamentos
+Agendamentos
 
-3.1 Criar Reserva
+1. Criar Reserva
 
 	•	URL: /api/bookings
 	•	Método: POST
 	•	Descrição: Cria uma nova reserva de quadra.
 	•	Headers:
 	•	Authorization: Bearer <TOKEN_JWT>
-	•	Corpo da Requisição:
+	•	Body:
 
 {
   "quadra_id": "64f4ef3b1c232c0012b09325",
@@ -144,7 +160,7 @@ Recursos
 
 
 
-3.2 Cancelar Reserva
+2. Cancelar Reserva
 
 	•	URL: /api/bookings/:id/cancel
 	•	Método: PUT
@@ -170,22 +186,17 @@ Recursos
 
 Validações
 
-1. Cadastro de Usuário
-
+	1.	Cadastro de Usuário:
 	•	Campos obrigatórios: nome, email, telefone, senha.
-
-2. Reserva
-
+	2.	Reserva:
 	•	Não é possível reservar horários que já estão ocupados.
 	•	Não é possível reservar fora do horário de funcionamento da quadra.
-
-3. Cancelamento de Reserva
-
+	3.	Cancelamento de Reserva:
 	•	Apenas o usuário que criou a reserva pode cancelá-la.
 
 Erros Comuns
 
-1. Cadastro de Usuário
+Cadastro de Usuário
 
 	•	Email já registrado:
 
@@ -196,7 +207,7 @@ Erros Comuns
 
 
 
-2. Reserva
+Reserva
 
 	•	Quadra não encontrada:
 
@@ -213,7 +224,7 @@ Erros Comuns
 
 
 
-3. Cancelamento de Reserva
+Cancelamento de Reserva
 
 	•	Reserva não encontrada ou não pertence ao usuário:
 
@@ -226,4 +237,6 @@ Considerações Finais
 	•	Autenticação: Apenas usuários autenticados podem criar ou cancelar reservas.
 	•	Flexibilidade: O front-end pode decidir quais horários exibir como disponíveis, com base nos dados retornados.
 
-Se precisar de ajuda para integrar ou ajustar algo, é só avisar!
+Se precisar de mais informações ou ajustes, é só abrir uma issue ou entrar em contato! 😊
+
+Agora, basta copiar esse conteúdo para o arquivo README.md do seu repositório no GitHub!
