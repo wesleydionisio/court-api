@@ -6,10 +6,16 @@ const BookingSchema = new mongoose.Schema({
   data: { type: Date, required: true },
   horario_inicio: { type: String, required: true }, // Formato HH:mm
   horario_fim: { type: String, required: true },   // Formato HH:mm
+  esporte: { type: mongoose.Schema.Types.ObjectId, ref: 'Sport', required: true },
+  pagamento: {
+    type: String,
+    enum: ['pagamento_no_ato'],
+    default: 'pagamento_no_ato',
+  },
   status: {
     type: String,
-    enum: ['pendente', 'confirmada', 'cancelada'], // Valores permitidos
-    default: 'pendente', // Valor padrão ao criar
+    enum: ['pendente', 'confirmada', 'cancelada'],
+    default: 'pendente',
   },
 });
 

@@ -3,13 +3,18 @@ const Court = require('../models/Court');
 
 exports.createBooking = async (req, res) => {
   try {
-    const { quadra_id, data, horario_inicio, horario_fim } = req.body;
+    const { quadra_id, data, horario_inicio, horario_fim, esporte_id, pagamento } = req.body;
 
     // Verificar se a quadra existe
     const quadra = await Court.findById(quadra_id);
     if (!quadra) {
       return res.status(404).json({ message: 'Quadra não encontrada.' });
     }
+
+        // Verificar se o esporte selecionado é válido para a quadra
+        if (!quadra.esportes_permitidos.some((esporte) => esporte.equals(esporte_id))) {
+          return res.status(400).json({ message: 'Esporte selecionado não é permitido para esta quadra.' });
+        }
 
     // Verificar disponibilidade
     const reservas = await Booking.find({
@@ -32,6 +37,8 @@ exports.createBooking = async (req, res) => {
       data,
       horario_inicio,
       horario_fim,
+      esporte: esporte_id,
+      pagamento: pagamento || 'pagamento_no_ato', // Usar valor padrão se não fornecido
     });
 
     res.status(201).json({
@@ -99,3 +106,4 @@ exports.getReservedTimes = async (req, res) => {
     res.status(500).json({ message: 'Erro ao buscar horários agendados.', error: err.message });
   }
 };
+
