@@ -6,11 +6,19 @@ const userRoutes = require('./routes/userRoutes'); // Rotas de usuários
 const courtRoutes = require('./routes/courtRoutes'); // Rotas de quadras
 const bookingRoutes = require('./routes/bookingRoutes'); // Rotas de agendamentos
 const errorHandler = require('./middlewares/errorHandler'); // Middleware para erros
+const cors = require('cors');
 
 const app = express();
 
 // Middleware para analisar requisições JSON
 app.use(express.json());
+
+// Configuração explícita para permitir o frontend
+app.use(cors({
+  origin: 'http://localhost:3001', // URL do frontend
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Métodos permitidos
+  allowedHeaders: ['Content-Type', 'Authorization'], // Cabeçalhos permitidos
+}));
 
 // Conectar ao banco de dados
 connectDB();

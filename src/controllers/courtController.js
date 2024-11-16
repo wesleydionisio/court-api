@@ -1,5 +1,7 @@
 const Sport = require('../models/Sport');
 const Court = require('../models/Court');
+const Booking = require('../models/Booking');
+
 
 exports.getCourts = async (req, res) => {
   try {
@@ -31,6 +33,7 @@ exports.createCourt = async (req, res) => {
       galeria,
       duracao_padrao,
       esportes_permitidos, // Recebe nomes como ['Futebol', 'Basquete']
+      formas_pagamento, // Adicione esta linha
     } = req.body;
 
     // Converter nomes de esportes para seus respectivos IDs
@@ -50,6 +53,8 @@ exports.createCourt = async (req, res) => {
       galeria,
       duracao_padrao,
       esportes_permitidos: esportesIds,
+      formas_pagamento, // Salve as formas de pagamento
+
     });
 
     res.status(201).json(newCourt);
@@ -105,5 +110,34 @@ exports.deleteCourt = async (req, res) => {
     res.status(200).json({ message: 'Quadra deletada com sucesso.' });
   } catch (err) {
     res.status(500).json({ message: 'Erro ao deletar quadra.', error: err.message });
+  }
+};
+
+exports.getReservedTimes = async (req, res) => {
+  try {
+    const { id } = req.params; // ID da quadra
+    const { data } = req.query; // Data no formato YYYY-MM-DD
+
+    // Verificar se a quadra existe
+    const court = await Court.findById(id);
+    if (!court) {
+      return res.status(404).json({ message: 'Quadra não encontrada.' });
+    }
+
+    // Buscar reservas para a quadra na data especificada
+    const reservas = await Booking.find({ 
+      quadra_id: id, 
+      data 
+    });
+
+    // Formatar os horários reservados
+    const horariosReservados = reservas.map((reserva) => ({
+      inicio: reserva.horario_inicio,
+      fim: reserva.horario_fim,
+    }));
+
+    res.status(200).json({ horariosReservados });
+  } catch (err) {
+    res.status(500).json({ message: 'Erro ao buscar horários reservados.', error: err.message });
   }
 };

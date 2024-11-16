@@ -7,7 +7,8 @@ const CourtSchema = new mongoose.Schema({
   galeria: [{ type: String }], // URLs das imagens
   duracao_padrao: { type: Number, required: true }, // em minutos
   esportes_permitidos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Sport' }],
-  horarios_reservados: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Booking' }]
+  horarios_reservados: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Booking' }],
+  formas_pagamento: [{ type: String }], // Adicione este campo
 });
 
 module.exports = mongoose.model('Court', CourtSchema);

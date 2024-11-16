@@ -5,7 +5,8 @@ const {
   createCourt,
   updateCourt,
   deleteCourt,
-} = require('../controllers/courtController');
+  getReservedTimes // Adicione esta linha
+} = require('../controllers/courtController')
 const authMiddleware = require('../middlewares/authMiddleware');
 
 const router = express.Router();
@@ -24,5 +25,9 @@ router.put('/:id', authMiddleware, updateCourt);
 
 // Rota para excluir uma quadra (autenticado)
 router.delete('/:id', authMiddleware, deleteCourt);
+
+// Rota para buscar horários reservados de uma quadra específica
+router.get('/:id/reserved-times', getReservedTimes);
+
 
 module.exports = router;
