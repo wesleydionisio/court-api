@@ -65,3 +65,37 @@ exports.cancelBooking = async (req, res) => {
     res.status(500).json({ message: 'Erro ao cancelar reserva.', error: err.message });
   }
 };
+
+exports.getReservedTimes = async (req, res) => {
+  try {
+    const { quadraId } = req.params;
+    const { data } = req.query;
+
+    // Verificar se a quadra existe
+    const quadra = await Court.findById(quadraId);
+    if (!quadra) {
+      return res.status(404).json({ message: 'Quadra não encontrada.' });
+    }
+
+    // Usar a data fornecida ou o dia atual
+    const dia = data || new Date().toISOString().split('T')[0];
+
+    // Buscar reservas para a quadra na data especificada
+    const reservas = await Booking.find({ quadra_id: quadraId, data: dia });
+
+    // Formatar os horários agendados
+    const horariosAgendados = reservas.map((reserva) => ({
+      inicio: reserva.horario_inicio,
+      fim: reserva.horario_fim,
+      status: reserva.status,
+    }));
+
+    res.status(200).json({
+      quadra_id: quadraId,
+      data: dia,
+      horarios_agendados: horariosAgendados,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Erro ao buscar horários agendados.', error: err.message });
+  }
+};
