@@ -62,6 +62,14 @@ exports.createBooking = async (req, res) => {
       });
     }
 
+        // Calcular o total da reserva
+        const [inicioHora, inicioMinuto] = horario_inicio.split(':').map(Number);
+        const [fimHora, fimMinuto] = horario_fim.split(':').map(Number);
+        const duracaoHoras = fimHora - inicioHora + (fimMinuto - inicioMinuto) / 60;
+    
+        const precoPorHora = quadra.preco_por_hora || 100; // Defina um preço padrão ou obtenha do quadra/esporte
+        const total = duracaoHoras * precoPorHora;
+
     // Criar a reserva
     const novaReserva = await Booking.create({
       usuario_id: req.user.id, // Obtido do token JWT
@@ -71,6 +79,8 @@ exports.createBooking = async (req, res) => {
       horario_fim,
       esporte: esporte_id,
       pagamento, // Valor já validado pelo enum
+      total, // Adiciona o total calculado
+      pague_no_local: pagamento === 'pagamento_no_ato', // Define se o pagamento é no local
     });
 
     res.status(201).json({
@@ -156,6 +166,53 @@ exports.getReservedTimes = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erro ao buscar horários agendados.',
+    });
+  }
+};
+
+exports.getBookingById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Buscar a reserva pelo ID e popular os campos necessários
+    const booking = await Booking.findById(id)
+      .populate('quadra_id')
+      .populate('esporte')
+      .populate('usuario_id', 'nome'); // Popula apenas o campo 'nome' do usuário
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Reserva não encontrada.',
+      });
+    }
+
+    // Estruturar os dados da reserva para a resposta
+    const reservationData = {
+      reservationId: booking._id,
+      quadra_id: booking.quadra_id._id,
+      nome: booking.quadra_id.nome,
+      foto_principal: booking.quadra_id.foto_principal,
+      data: booking.data.toISOString().split('T')[0], // Formato YYYY-MM-DD
+      horario_inicio: booking.horario_inicio,
+      horario_fim: booking.horario_fim,
+      esporte: booking.esporte.nome,
+      cliente: booking.usuario_id.nome, // Nome do cliente
+      pagamento: booking.pagamento,
+      total: booking.total,
+      pague_no_local: booking.pague_no_local,
+      status: booking.status,
+    };
+
+    res.status(200).json({
+      success: true,
+      reservation: reservationData,
+    });
+  } catch (err) {
+    console.error('Erro ao buscar reserva:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor.',
     });
   }
 };

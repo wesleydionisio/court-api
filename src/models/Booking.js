@@ -18,6 +18,8 @@ const BookingSchema = new mongoose.Schema({
     enum: ['pendente', 'confirmada', 'cancelada'],
     default: 'pendente',
   },
-});
+  total: { type: Number, required: true }, // Total da reserva
+  pague_no_local: { type: Boolean, default: true }, // Se o pagamento é no local
+}, { timestamps: true });
 
 module.exports = mongoose.model('Booking', BookingSchema);

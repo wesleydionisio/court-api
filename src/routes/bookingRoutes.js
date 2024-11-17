@@ -1,6 +1,6 @@
 // src/routes/bookingRoutes.js
 const express = require('express');
-const { createBooking, cancelBooking, getReservedTimes } = require('../controllers/bookingController');
+const { createBooking, cancelBooking, getReservedTimes, getBookingById } = require('../controllers/bookingController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 const router = express.Router();
@@ -13,5 +13,9 @@ router.put('/:id/cancel', authMiddleware, cancelBooking);
 
 // Endpoint para consultar horários agendados
 router.get('/:quadraId/reserved-times', getReservedTimes);
+
+// Endpoint para buscar detalhes de uma reserva por ID
+router.get('/:id', authMiddleware, getBookingById); // Protegido por autenticação
+
 
 module.exports = router;
