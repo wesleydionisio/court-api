@@ -289,20 +289,23 @@ exports.getBookingById = async (req, res) => {
   }
 };
 
-// Função para obter todas as reservas do usuário
+// Função para obter todas as reservas do usuário autenticado
 exports.getUserBookings = async (req, res) => {
   try {
-    const userId = req.user.id; // Obtido do middleware de autenticação
-    const reservas = await Booking.find({ usuario_id: userId, status: { $ne: 'cancelada' } })
+    const userId = req.user.id; // Obtido pelo authMiddleware
+
+    // Buscar todas as reservas onde usuario_id é igual ao ID do usuário autenticado
+    const reservas = await Booking.find({ usuario_id: userId })
       .populate('quadra_id')
-      .populate('esporte');
+      .populate('esporte')
+      .sort({ data: -1 }); // Ordenar por data descendente (opcional)
 
     res.status(200).json({
       success: true,
       reservas,
     });
-  } catch (err) {
-    console.error('Erro ao buscar reservas do usuário:', err);
+  } catch (error) {
+    console.error('Erro ao buscar reservas do usuário:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor.',
