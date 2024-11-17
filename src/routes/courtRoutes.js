@@ -1,3 +1,5 @@
+// src/routes/courtRoutes.js
+
 const express = require('express');
 const {
   getCourts,
@@ -28,6 +30,5 @@ router.delete('/:id', authMiddleware, deleteCourt);
 
 // Rota para buscar horários reservados de uma quadra específica
 router.get('/:id/reserved-times', getReservedTimes);
-
 
 module.exports = router;

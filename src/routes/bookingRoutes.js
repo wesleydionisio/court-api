@@ -1,21 +1,19 @@
 // src/routes/bookingRoutes.js
+
 const express = require('express');
-const { createBooking, cancelBooking, getReservedTimes, getBookingById } = require('../controllers/bookingController');
+const router = express.Router();
+const bookingController = require('../controllers/bookingController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
-const router = express.Router();
+// Rota protegida para obter reservas do usuário
+router.get('/user', authMiddleware, bookingController.getUserBookings);
 
-// Endpoint para criar uma reserva
-router.post('/', authMiddleware, createBooking);
+// Outras rotas
+router.post('/', authMiddleware, bookingController.createBooking);
+router.put('/:id/cancel', authMiddleware, bookingController.cancelBooking);
+router.get('/:quadraId/reserved-times', bookingController.getReservedTimes);
 
-// Endpoint para cancelar uma reserva
-router.put('/:id/cancel', authMiddleware, cancelBooking);
-
-// Endpoint para consultar horários agendados
-router.get('/:quadraId/reserved-times', getReservedTimes);
-
-// Endpoint para buscar detalhes de uma reserva por ID
-router.get('/:id', authMiddleware, getBookingById); // Protegido por autenticação
-
+// Adicionar esta rota para obter detalhes de uma reserva específica
+router.get('/:id', authMiddleware, bookingController.getBookingById);
 
 module.exports = router;

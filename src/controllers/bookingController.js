@@ -1,10 +1,13 @@
 // src/controllers/bookingController.js
+
+const mongoose = require('mongoose'); // **Adicionar esta linha**
 const Booking = require('../models/Booking');
 const Court = require('../models/Court');
+const Sport = require('../models/Sport'); // Corrigido de Esporte para Sport
+const User = require('../models/User'); // Adicionar importação do User se necessário
 const Joi = require('joi');
 
-
-
+// Função para criar uma reserva
 exports.createBooking = async (req, res) => {
   try {
     // Definir o esquema de validação
@@ -17,18 +20,17 @@ exports.createBooking = async (req, res) => {
       pagamento: Joi.string().valid('pagamento_no_ato', 'Dinheiro', 'Cartão de Crédito', 'Pix').required(),
     });
 
-        // Validar os dados
-        const { error, value } = schema.validate(req.body);
-        if (error) {
-          return res.status(400).json({
-            success: false,
-            message: 'Validação falhou.',
-            errors: error.details.map(detail => detail.message),
-          });
-        }
+    // Validar os dados
+    const { error, value } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validação falhou.',
+        errors: error.details.map(detail => detail.message),
+      });
+    }
 
-        const { quadra_id, data, horario_inicio, horario_fim, esporte_id, pagamento } = value;
-
+    const { quadra_id, data, horario_inicio, horario_fim, esporte_id, pagamento } = value;
 
     // Verificar se a quadra existe
     const quadra = await Court.findById(quadra_id);
@@ -76,16 +78,16 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-     // Calcular o total da reserva (ajuste conforme sua lógica de negócios)
-     const [inicioHora, inicioMinuto] = horario_inicio.split(':').map(Number);
-     const [fimHora, fimMinuto] = horario_fim.split(':').map(Number);
-     const duracaoHoras = fimHora - inicioHora + (fimMinuto - inicioMinuto) / 60;
- 
-     const precoPorHora = quadra.preco_por_hora || 100; // Defina um preço padrão ou obtenha do quadra/esporte
-     const total = duracaoHoras * precoPorHora;
- 
-     // Criar a reserva
-     const novaReserva = await Booking.create({
+    // Calcular o total da reserva (ajuste conforme sua lógica de negócios)
+    const [inicioHora, inicioMinuto] = horario_inicio.split(':').map(Number);
+    const [fimHora, fimMinuto] = horario_fim.split(':').map(Number);
+    const duracaoHoras = fimHora - inicioHora + (fimMinuto - inicioMinuto) / 60;
+
+    const precoPorHora = quadra.preco_por_hora || 100; // Defina um preço padrão ou obtenha do quadra/esporte
+    const total = duracaoHoras * precoPorHora;
+
+    // Criar a reserva
+    const novaReserva = await Booking.create({
       usuario_id: req.user.id, // Obtido do token JWT
       quadra_id,
       data,
@@ -111,6 +113,7 @@ exports.createBooking = async (req, res) => {
   }
 };
 
+// Função para cancelar uma reserva
 exports.cancelBooking = async (req, res) => {
   try {
     const { id } = req.params; // ID da reserva a ser cancelada
@@ -137,22 +140,17 @@ exports.cancelBooking = async (req, res) => {
     // Verificar se a reserva já começou
     const now = Date.now(); // Timestamp atual em milissegundos
 
-        // Extrair componentes de data e hora da reserva
-        const year = booking.data.getFullYear();
-        const month = booking.data.getMonth(); // Note que getMonth() retorna 0-11
-        const day = booking.data.getDate();
-        const [hour, minute] = booking.horario_inicio.split(':').map(Number);
-
-
-    // Criar objeto Date local para bookingDateTime
-    const bookingDateTime = new Date(year, month, day, hour, minute, 0, 0).getTime();
+    // Extrair componentes de data e hora da reserva
+    const bookingDateTime = new Date(booking.data);
+    const [hour, minute] = booking.horario_inicio.split(':').map(Number);
+    bookingDateTime.setHours(hour, minute, 0, 0);
+    const bookingTimestamp = bookingDateTime.getTime();
 
     console.log(`Data atual (backend): ${new Date(now).toISOString()}`);
-    console.log(`Data da reserva (backend): ${new Date(bookingDateTime).toISOString()}`);
+    console.log(`Data da reserva (backend): ${bookingDateTime.toISOString()}`);
 
-
-    if (now >= bookingDateTime) {
-      console.log(`Não é possível cancelar uma reserva que já começou. (now: ${new Date(now).toISOString()} >= bookingDateTime: ${new Date(bookingDateTime).toISOString()})`);
+    if (now >= bookingTimestamp) {
+      console.log(`Não é possível cancelar uma reserva que já começou. (now: ${new Date(now).toISOString()} >= bookingDateTime: ${bookingDateTime.toISOString()})`);
       return res.status(400).json({
         success: false,
         message: 'Não é possível cancelar uma reserva que já começou.',
@@ -179,6 +177,7 @@ exports.cancelBooking = async (req, res) => {
   }
 };
 
+// Função para obter horários reservados para uma quadra em uma data específica
 exports.getReservedTimes = async (req, res) => {
   try {
     const { quadraId } = req.params;
@@ -227,10 +226,16 @@ exports.getReservedTimes = async (req, res) => {
   }
 };
 
+// Função para obter detalhes de uma reserva específica
+// Função para obter detalhes de uma reserva específica
 exports.getBookingById = async (req, res) => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params; // **Mover esta linha para antes de usar 'id'**
 
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ success: false, message: 'ID inválido.' });
+  }
+
+  try {
     // Buscar a reserva pelo ID e popular os campos necessários
     const booking = await Booking.findById(id)
       .populate('quadra_id')
@@ -242,6 +247,16 @@ exports.getBookingById = async (req, res) => {
         success: false,
         message: 'Reserva não encontrada.',
       });
+    }
+
+    console.log(`Reserva encontrada: ${JSON.stringify(booking)}`);
+    console.log(`ID do usuário autenticado: ${req.user.id}`);
+    console.log(`ID do usuário da reserva: ${booking.usuario_id.id}`);
+
+    // Verificar se a reserva pertence ao usuário autenticado usando o método 'equals'
+    if (!booking.usuario_id.equals(req.user.id)) {
+      console.log(`Usuário ${req.user.id} não tem permissão para acessar a reserva ${id}.`);
+      return res.status(403).json({ success: false, message: 'Acesso negado.' });
     }
 
     // Estruturar os dados da reserva para a resposta
@@ -267,6 +282,27 @@ exports.getBookingById = async (req, res) => {
     });
   } catch (err) {
     console.error('Erro ao buscar reserva:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor.',
+    });
+  }
+};
+
+// Função para obter todas as reservas do usuário
+exports.getUserBookings = async (req, res) => {
+  try {
+    const userId = req.user.id; // Obtido do middleware de autenticação
+    const reservas = await Booking.find({ usuario_id: userId, status: { $ne: 'cancelada' } })
+      .populate('quadra_id')
+      .populate('esporte');
+
+    res.status(200).json({
+      success: true,
+      reservas,
+    });
+  } catch (err) {
+    console.error('Erro ao buscar reservas do usuário:', err);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor.',

@@ -1,3 +1,5 @@
+// server.js
+
 require('dotenv').config(); // Carrega variáveis de ambiente do .env
 const express = require('express');
 const connectDB = require('./config/database'); // Configuração do banco de dados
@@ -29,7 +31,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/courts', courtRoutes);
 app.use('/api/bookings', bookingRoutes);
 
-// Middleware de erros
+// Middleware de erros (deve estar após as rotas)
 app.use(errorHandler);
 
 // Rota padrão para testar o servidor
