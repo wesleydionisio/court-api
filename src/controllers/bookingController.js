@@ -1,26 +1,34 @@
 // src/controllers/bookingController.js
 const Booking = require('../models/Booking');
 const Court = require('../models/Court');
+const Joi = require('joi');
+
+
 
 exports.createBooking = async (req, res) => {
   try {
-    const { quadra_id, data, horario_inicio, horario_fim, esporte_id, pagamento } = req.body;
+    // Definir o esquema de validação
+    const schema = Joi.object({
+      quadra_id: Joi.string().required(),
+      data: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required(), // Validar formato YYYY-MM-DD
+      horario_inicio: Joi.string().pattern(/^([0-1]\d|2[0-3]):([0-5]\d)$/).required(),
+      horario_fim: Joi.string().pattern(/^([0-1]\d|2[0-3]):([0-5]\d)$/).required(),
+      esporte_id: Joi.string().required(),
+      pagamento: Joi.string().valid('pagamento_no_ato', 'Dinheiro', 'Cartão de Crédito', 'Pix').required(),
+    });
 
-    // Validação básica dos campos
-    if (!quadra_id || !data || !horario_inicio || !horario_fim || !esporte_id || !pagamento) {
-      return res.status(400).json({
-        success: false,
-        message: 'Por favor, preencha todos os campos.',
-        errors: {
-          quadra_id: !quadra_id ? 'Quadra é obrigatória.' : undefined,
-          data: !data ? 'Data é obrigatória.' : undefined,
-          horario_inicio: !horario_inicio ? 'Horário de início é obrigatório.' : undefined,
-          horario_fim: !horario_fim ? 'Horário de fim é obrigatório.' : undefined,
-          esporte_id: !esporte_id ? 'Esporte é obrigatório.' : undefined,
-          pagamento: !pagamento ? 'Forma de pagamento é obrigatória.' : undefined,
-        },
-      });
-    }
+        // Validar os dados
+        const { error, value } = schema.validate(req.body);
+        if (error) {
+          return res.status(400).json({
+            success: false,
+            message: 'Validação falhou.',
+            errors: error.details.map(detail => detail.message),
+          });
+        }
+
+        const { quadra_id, data, horario_inicio, horario_fim, esporte_id, pagamento } = value;
+
 
     // Verificar se a quadra existe
     const quadra = await Court.findById(quadra_id);
@@ -42,13 +50,19 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-    // Verificar disponibilidade
+    // Verificar disponibilidade, excluindo reservas canceladas
     const reservas = await Booking.find({
       quadra_id,
       data,
+      status: { $ne: 'cancelada' }, // Excluir reservas canceladas
       $or: [
         { horario_inicio: { $lt: horario_fim, $gte: horario_inicio } },
         { horario_fim: { $gt: horario_inicio, $lte: horario_fim } },
+        { $and: [
+            { horario_inicio: { $lte: horario_inicio } },
+            { horario_fim: { $gte: horario_fim } }
+          ] 
+        },
       ],
     });
 
@@ -62,16 +76,16 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-        // Calcular o total da reserva
-        const [inicioHora, inicioMinuto] = horario_inicio.split(':').map(Number);
-        const [fimHora, fimMinuto] = horario_fim.split(':').map(Number);
-        const duracaoHoras = fimHora - inicioHora + (fimMinuto - inicioMinuto) / 60;
-    
-        const precoPorHora = quadra.preco_por_hora || 100; // Defina um preço padrão ou obtenha do quadra/esporte
-        const total = duracaoHoras * precoPorHora;
-
-    // Criar a reserva
-    const novaReserva = await Booking.create({
+     // Calcular o total da reserva (ajuste conforme sua lógica de negócios)
+     const [inicioHora, inicioMinuto] = horario_inicio.split(':').map(Number);
+     const [fimHora, fimMinuto] = horario_fim.split(':').map(Number);
+     const duracaoHoras = fimHora - inicioHora + (fimMinuto - inicioMinuto) / 60;
+ 
+     const precoPorHora = quadra.preco_por_hora || 100; // Defina um preço padrão ou obtenha do quadra/esporte
+     const total = duracaoHoras * precoPorHora;
+ 
+     // Criar a reserva
+     const novaReserva = await Booking.create({
       usuario_id: req.user.id, // Obtido do token JWT
       quadra_id,
       data,
@@ -104,15 +118,52 @@ exports.cancelBooking = async (req, res) => {
     // Verificar se a reserva existe e pertence ao usuário
     const booking = await Booking.findOne({ _id: id, usuario_id: req.user.id });
     if (!booking) {
+      console.log(`Reserva com ID ${id} não encontrada ou não pertence ao usuário.`);
       return res.status(404).json({
         success: false,
         message: 'Reserva não encontrada ou não pertence ao usuário.',
       });
     }
 
+    // Verificar se a reserva já está cancelada
+    if (booking.status === 'cancelada') {
+      console.log(`Reserva com ID ${id} já foi cancelada.`);
+      return res.status(400).json({
+        success: false,
+        message: 'A reserva já foi cancelada.',
+      });
+    }
+
+    // Verificar se a reserva já começou
+    const now = Date.now(); // Timestamp atual em milissegundos
+
+        // Extrair componentes de data e hora da reserva
+        const year = booking.data.getFullYear();
+        const month = booking.data.getMonth(); // Note que getMonth() retorna 0-11
+        const day = booking.data.getDate();
+        const [hour, minute] = booking.horario_inicio.split(':').map(Number);
+
+
+    // Criar objeto Date local para bookingDateTime
+    const bookingDateTime = new Date(year, month, day, hour, minute, 0, 0).getTime();
+
+    console.log(`Data atual (backend): ${new Date(now).toISOString()}`);
+    console.log(`Data da reserva (backend): ${new Date(bookingDateTime).toISOString()}`);
+
+
+    if (now >= bookingDateTime) {
+      console.log(`Não é possível cancelar uma reserva que já começou. (now: ${new Date(now).toISOString()} >= bookingDateTime: ${new Date(bookingDateTime).toISOString()})`);
+      return res.status(400).json({
+        success: false,
+        message: 'Não é possível cancelar uma reserva que já começou.',
+      });
+    }
+
     // Atualizar o status da reserva para 'cancelada'
     booking.status = 'cancelada';
     await booking.save();
+
+    console.log(`Reserva com ID ${id} foi cancelada com sucesso.`);
 
     res.status(200).json({
       success: true,
@@ -145,8 +196,14 @@ exports.getReservedTimes = async (req, res) => {
     // Usar a data fornecida ou o dia atual
     const dia = data || new Date().toISOString().split('T')[0];
 
-    // Buscar reservas para a quadra na data especificada
-    const reservas = await Booking.find({ quadra_id: quadraId, data: dia });
+    // Buscar reservas para a quadra na data especificada, excluindo canceladas
+    const reservas = await Booking.find({
+      quadra_id: quadraId,
+      data: dia,
+      status: { $ne: 'cancelada' }, // Excluir reservas canceladas
+    });
+
+    console.log(`Reservas para quadra ${quadraId} na data ${dia}:`, reservas);
 
     // Formatar os horários agendados
     const horariosAgendados = reservas.map((reserva) => ({

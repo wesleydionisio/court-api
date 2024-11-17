@@ -22,4 +22,7 @@ const BookingSchema = new mongoose.Schema({
   pague_no_local: { type: Boolean, default: true }, // Se o pagamento é no local
 }, { timestamps: true });
 
+// Adiciona um índice composto para melhorar a performance das consultas
+BookingSchema.index({ quadra_id: 1, data: 1, status: 1, horario_inicio: 1, horario_fim: 1 });
+
 module.exports = mongoose.model('Booking', BookingSchema);
