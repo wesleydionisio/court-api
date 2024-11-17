@@ -72,6 +72,7 @@ exports.updateCourt = async (req, res) => {
       galeria,
       duracao_padrao,
       esportes_permitidos,
+      formas_pagamento, // Adicionado este campo
     } = req.body;
 
     // Converter nomes de esportes para seus respectivos IDs
