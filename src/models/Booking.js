@@ -1,3 +1,4 @@
+// models/Booking.js
 const mongoose = require('mongoose');
 
 const BookingSchema = new mongoose.Schema({
@@ -9,7 +10,7 @@ const BookingSchema = new mongoose.Schema({
   esporte: { type: mongoose.Schema.Types.ObjectId, ref: 'Sport', required: true },
   pagamento: {
     type: String,
-    enum: ['pagamento_no_ato'],
+    enum: ['pagamento_no_ato', 'Dinheiro', 'Cartão de Crédito', 'Pix'],
     default: 'pagamento_no_ato',
   },
   status: {

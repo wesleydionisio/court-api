@@ -1,3 +1,4 @@
+// src/routes/bookingRoutes.js
 const express = require('express');
 const { createBooking, cancelBooking, getReservedTimes } = require('../controllers/bookingController');
 const authMiddleware = require('../middlewares/authMiddleware');
