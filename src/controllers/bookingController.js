@@ -17,7 +17,7 @@ exports.createBooking = async (req, res) => {
       horario_inicio: Joi.string().pattern(/^([0-1]\d|2[0-3]):([0-5]\d)$/).required(),
       horario_fim: Joi.string().pattern(/^([0-1]\d|2[0-3]):([0-5]\d)$/).required(),
       esporte_id: Joi.string().required(),
-      pagamento: Joi.string().valid('pagamento_no_ato', 'Dinheiro', 'Cartão de Crédito', 'Pix').required(),
+      pagamento: Joi.string().required(), // Alterado para aceitar o ID do método de pagamento
     });
 
     // Validar os dados

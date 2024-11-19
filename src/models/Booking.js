@@ -31,9 +31,9 @@ const BookingSchema = new mongoose.Schema({
     required: true,
   },
   pagamento: {
-    type: String,
-    enum: ['Dinheiro', 'Cartão', 'Pagamento no Ato'],
-    required: true,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'PaymentMethod',
+    required: true
   },
   status: {
     type: String,

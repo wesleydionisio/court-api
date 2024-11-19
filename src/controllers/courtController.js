@@ -1,65 +1,133 @@
 const Sport = require('../models/Sport');
 const Court = require('../models/Court');
 const Booking = require('../models/Booking');
+const PaymentMethod = require('../models/PaymentMethod');
+const mongoose = require('mongoose');
 
 
 exports.getCourts = async (req, res) => {
   try {
-    const courts = await Court.find().populate('esportes_permitidos');
-    res.status(200).json(courts);
+    console.log('Iniciando busca de quadras...');
+    
+    // Buscar quadras e popular tanto esportes quanto formas de pagamento
+    const courts = await Court.find()
+      .populate('esportes_permitidos')
+      .populate('formas_pagamento');
+    
+    console.log('Quadras encontradas:', courts);
+
+    res.status(200).json({
+      success: true,
+      courts: courts
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Erro ao buscar quadras.', error: err.message });
+    console.error('Erro ao buscar quadras:', err);
+    res.status(500).json({ 
+      success: false,
+      message: 'Erro ao buscar quadras.',
+      error: err.message 
+    });
   }
 };
 
 exports.getCourtById = async (req, res) => {
   try {
-    const court = await Court.findById(req.params.id).populate('esportes_permitidos');
+    console.log('Buscando quadra com ID:', req.params.id);
+    
+    const court = await Court.findById(req.params.id)
+      .populate('esportes_permitidos')
+      .populate({
+        path: 'formas_pagamento',
+        match: { ativo: true },
+        select: '_id nome codigo ativo'
+      });
+    
     if (!court) {
-      return res.status(404).json({ message: 'Quadra não encontrada.' });
+      return res.status(404).json({
+        success: false,
+        message: 'Quadra não encontrada'
+      });
     }
-    res.status(200).json(court);
-  } catch (err) {
-    res.status(500).json({ message: 'Erro ao buscar quadra.', error: err.message });
+
+    console.log('Métodos de pagamento da quadra:', court.formas_pagamento);
+
+    res.status(200).json({
+      success: true,
+      court: court
+    });
+  } catch (error) {
+    console.error('Erro ao buscar quadra:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao buscar quadra',
+      error: error.message
+    });
   }
 };
 
 exports.createCourt = async (req, res) => {
   try {
-    const {
-      nome,
-      descricao,
-      foto_principal,
-      galeria,
-      duracao_padrao,
-      esportes_permitidos, // Recebe nomes como ['Futebol', 'Basquete']
-      formas_pagamento, // Adicione esta linha
-    } = req.body;
+    console.log('Dados recebidos:', req.body);
 
-    // Converter nomes de esportes para seus respectivos IDs
-    const esportes = await Sport.find({ nome: { $in: esportes_permitidos } });
-    if (esportes.length !== esportes_permitidos.length) {
-      return res.status(400).json({
-        message: 'Alguns esportes fornecidos não foram encontrados no banco de dados.',
-      });
-    }
-    const esportesIds = esportes.map((esporte) => esporte._id);
+    // Validar se os IDs dos esportes são válidos
+    const esportesIds = req.body.esportes_permitidos.map(id => 
+      mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null
+    );
+    
+    console.log('IDs dos esportes convertidos:', esportesIds);
 
-    // Criar quadra
-    const newCourt = await Court.create({
-      nome,
-      descricao,
-      foto_principal,
-      galeria,
-      duracao_padrao,
-      esportes_permitidos: esportesIds,
-      formas_pagamento, // Salve as formas de pagamento
-
+    // Verificar se todos os esportes existem
+    const esportesEncontrados = await Sport.find({
+      '_id': { $in: esportesIds }
     });
 
-    res.status(201).json(newCourt);
-  } catch (err) {
-    res.status(500).json({ message: 'Erro ao criar quadra.', error: err.message });
+    console.log('Esportes encontrados:', esportesEncontrados);
+
+    if (esportesEncontrados.length !== esportesIds.length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Alguns esportes fornecidos não foram encontrados no banco de dados.'
+      });
+    }
+
+    // Se não houver métodos de pagamento definidos, usar os padrões
+    if (!req.body.formas_pagamento || req.body.formas_pagamento.length === 0) {
+      const defaultPayments = await PaymentMethod.find({ ativo: true });
+      if (defaultPayments.length > 0) {
+        req.body.formas_pagamento = defaultPayments.map(p => p._id);
+      }
+    }
+
+    // Criar a quadra com os métodos de pagamento
+    const novaQuadra = await Court.create({
+      nome: req.body.nome,
+      descricao: req.body.descricao,
+      foto_principal: req.body.foto_principal,
+      galeria: req.body.galeria,
+      duracao_padrao: req.body.duracao_padrao,
+      preco_por_hora: req.body.preco_por_hora,
+      esportes_permitidos: esportesIds,
+      formas_pagamento: req.body.formas_pagamento
+    });
+
+    // Popular os métodos de pagamento antes de retornar
+    await novaQuadra.populate('formas_pagamento');
+
+    console.log('Quadra criada:', novaQuadra);
+
+    res.status(201).json({
+      success: true,
+      message: 'Quadra criada com sucesso',
+      court: novaQuadra
+    });
+
+  } catch (error) {
+    console.error('Erro detalhado ao criar quadra:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao criar quadra',
+      error: error.message
+    });
   }
 };
 
@@ -122,7 +190,7 @@ exports.getReservedTimes = async (req, res) => {
     // Verificar se a quadra existe
     const court = await Court.findById(id);
     if (!court) {
-      return res.status(404).json({ message: 'Quadra não encontrada.' });
+      return res.status(404).json({ message: 'Quadra no encontrada.' });
     }
 
     // Buscar reservas para a quadra na data especificada
